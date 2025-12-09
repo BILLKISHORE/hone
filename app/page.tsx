@@ -116,7 +116,11 @@ export default function Home() {
 
             <RecommendationsCard recommendations={analysis.recommendations} />
 
-            <ProgramsCard programs={analysis.recommendedPrograms} />
+            <ProgramsCard
+              programs={analysis.recommendedPrograms}
+              patientId={analysis.patientId}
+              patientName={analysis.patientName}
+            />
           </div>
         )}
 
