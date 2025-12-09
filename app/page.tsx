@@ -8,7 +8,18 @@ import RiskCategoryCard from '@/components/RiskCategoryCard';
 import FutureRisksCard from '@/components/FutureRisksCard';
 import RecommendationsCard from '@/components/RecommendationsCard';
 import ProgramsCard from '@/components/ProgramsCard';
-import { PatientAnalysis, PatientData } from '@/types/patient';
+import TrendChartCard from '@/components/TrendChartCard';
+import TrendSummaryCard from '@/components/TrendSummaryCard';
+import AppointmentCard from '@/components/AppointmentCard';
+import AppointmentSuggestionCard from '@/components/AppointmentSuggestionCard';
+import {
+  PatientAnalysis,
+  PatientData,
+  PatientHistory,
+  TrendAnalysis,
+  Appointment,
+  AppointmentSuggestion,
+} from '@/types/patient';
 
 interface Patient {
   id: string;
@@ -22,7 +33,13 @@ export default function Home() {
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [selectedPatientData, setSelectedPatientData] = useState<PatientData | null>(null);
   const [analysis, setAnalysis] = useState<PatientAnalysis | null>(null);
+  const [patientHistory, setPatientHistory] = useState<PatientHistory | null>(null);
+  const [trendAnalysis, setTrendAnalysis] = useState<TrendAnalysis | null>(null);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [appointmentSuggestion, setAppointmentSuggestion] = useState<AppointmentSuggestion | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingTrends, setLoadingTrends] = useState(false);
+  const [loadingAppointments, setLoadingAppointments] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -43,6 +60,10 @@ export default function Home() {
     if (!selectedPatientId) {
       setAnalysis(null);
       setSelectedPatientData(null);
+      setPatientHistory(null);
+      setTrendAnalysis(null);
+      setAppointments([]);
+      setAppointmentSuggestion(null);
       return;
     }
 
@@ -68,7 +89,51 @@ export default function Home() {
       }
     }
 
+    async function fetchTrendData() {
+      setLoadingTrends(true);
+      try {
+        const historyResponse = await fetch(`/api/history/${selectedPatientId}`);
+        if (historyResponse.ok) {
+          const historyData = await historyResponse.json();
+          setPatientHistory(historyData);
+
+          const trendsResponse = await fetch(`/api/trends/${selectedPatientId}`);
+          if (trendsResponse.ok) {
+            const trendsData = await trendsResponse.json();
+            setTrendAnalysis(trendsData);
+          }
+        }
+      } catch {
+        console.error('Failed to load trend data');
+      } finally {
+        setLoadingTrends(false);
+      }
+    }
+
+    async function fetchAppointmentData() {
+      setLoadingAppointments(true);
+      try {
+        const appointmentsResponse = await fetch(`/api/appointments/${selectedPatientId}`);
+        if (appointmentsResponse.ok) {
+          const appointmentsData = await appointmentsResponse.json();
+          setAppointments(appointmentsData);
+        }
+
+        const suggestionResponse = await fetch(`/api/appointments/suggest/${selectedPatientId}`);
+        if (suggestionResponse.ok) {
+          const suggestionData = await suggestionResponse.json();
+          setAppointmentSuggestion(suggestionData);
+        }
+      } catch {
+        console.error('Failed to load appointment data');
+      } finally {
+        setLoadingAppointments(false);
+      }
+    }
+
     fetchPatientData();
+    fetchTrendData();
+    fetchAppointmentData();
   }, [selectedPatientId]);
 
   return (
@@ -76,7 +141,7 @@ export default function Home() {
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">AI Clinical Assistant</h1>
-          <p className="text-gray-600">Intelligent patient health analysis and risk assessment system</p>
+          <p className="text-gray-600">Intelligent patient health analysis, trend tracking, and appointment scheduling</p>
         </div>
 
         <PatientSelector
@@ -92,8 +157,9 @@ export default function Home() {
         )}
 
         {loading && (
-          <div className="mt-6 flex items-center justify-center py-12">
+          <div className="mt-6 flex flex-col items-center justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+            <p className="mt-4 text-gray-600">Analyzing patient data...</p>
           </div>
         )}
 
@@ -112,9 +178,41 @@ export default function Home() {
               <RiskCategoryCard riskCategory={analysis.riskCategory} />
             </div>
 
+            {loadingTrends ? (
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                  <span className="ml-3 text-gray-600">Loading health trends...</span>
+                </div>
+              </div>
+            ) : (
+              patientHistory && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <TrendChartCard history={patientHistory} />
+                  {trendAnalysis && <TrendSummaryCard trendAnalysis={trendAnalysis} />}
+                </div>
+              )
+            )}
+
             <FutureRisksCard futureRisks={analysis.futureRisks} />
 
             <RecommendationsCard recommendations={analysis.recommendations} />
+
+            {loadingAppointments ? (
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                  <span className="ml-3 text-gray-600">Loading appointments...</span>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <AppointmentCard appointments={appointments} />
+                {appointmentSuggestion && (
+                  <AppointmentSuggestionCard suggestion={appointmentSuggestion} />
+                )}
+              </div>
+            )}
 
             <ProgramsCard
               programs={analysis.recommendedPrograms}

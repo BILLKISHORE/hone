@@ -66,3 +66,72 @@ export interface PatientAnalysis {
   recommendedPrograms: LifestyleProgram[];
   analysisDate: string;
 }
+
+// ==========================================
+// Health Trend Tracker Types
+// ==========================================
+
+export interface VitalReading {
+  date: string;
+  value: number;
+}
+
+export interface PatientHistory {
+  patientId: string;
+  bloodPressureSystolic: VitalReading[];
+  bloodPressureDiastolic: VitalReading[];
+  glucose: VitalReading[];
+  weight: VitalReading[];
+  hdl: VitalReading[];
+  ldl: VitalReading[];
+  totalCholesterol: VitalReading[];
+  triglycerides: VitalReading[];
+}
+
+export interface VitalTrend {
+  vital: string;
+  trend: 'improving' | 'stable' | 'declining';
+  percentChange: number;
+  analysis: string;
+}
+
+export interface TrendAlert {
+  type: 'warning' | 'critical';
+  message: string;
+}
+
+export interface TrendAnalysis {
+  patientId: string;
+  overallTrend: 'improving' | 'stable' | 'declining';
+  trendSummary: string;
+  vitalTrends: VitalTrend[];
+  alerts: TrendAlert[];
+  analysisDate: string;
+}
+
+// ==========================================
+// Smart Appointment Scheduler Types
+// ==========================================
+
+export interface Appointment {
+  id: string;
+  patientId: string;
+  patientName: string;
+  scheduledDate: string;
+  type: 'follow-up' | 'routine-checkup' | 'urgent' | 'program-review';
+  reason: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  status: 'scheduled' | 'completed' | 'cancelled';
+  aiGenerated: boolean;
+  notes?: string;
+}
+
+export interface AppointmentSuggestion {
+  patientId: string;
+  patientName: string;
+  suggestedDate: string;
+  suggestedType: Appointment['type'];
+  priority: Appointment['priority'];
+  reasoning: string;
+  basedOn: string[];
+}
