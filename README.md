@@ -107,8 +107,7 @@ Returns comprehensive AI-powered health analysis for a specific patient includin
 │   ├── patients.ts
 │   └── programs.ts
 ├── lib/
-│   ├── aiHealthAnalyzer.ts
-│   └── healthAnalyzer.ts (legacy)
+│   └── aiHealthAnalyzer.ts
 └── types/
     └── patient.ts
 ```
